@@ -13,13 +13,15 @@ data = pd.read_csv('train.csv')
 
 # m is number of training examples (42,000)
 # n is the number of pixels per example, plus 1 for the label column (28 x 28 + 1 = 785 in total)
+# Shuffle before splitting into dev and training sets
 data = np.array(data)
 m, n = data.shape
-np.random.shuffle(data) # shuffle before splitting into dev and training sets
+np.random.shuffle(data)
 
 # data_dev is the transpose of the first 1000 training examples, which will be used for testing the trained network
 # Y_dev is the first row of data_dev, or an array of each of the ground-truth values of the first 1000 training examples
 # X_dev is the remaining 784 rows of data_dev, each row representing the next pixle for each of the first 1000 training examples
+# X_dev values will be between 0 and 255, so X_dev is divided by 255 to make each value between 0 and 1
 data_dev = data[0:1000].T
 Y_dev = data_dev[0]
 X_dev = data_dev[1:n]
@@ -28,6 +30,7 @@ X_dev = X_dev / 255.
 # data_train is the transpose of the remaining 41,000 training examples, which will be used to train the network
 # Y_train is the first row of data_train, or an array of each of the ground-truth values of the remaining 41,000 training examples
 # X_train is the remaining 784 rows of data_train, each row representing the next pixle for each of the remaining 41,000 training examples
+# X_train values will be between 0 and 255, so X_dev is divided by 255 to make each value between 0 and 1
 data_train = data[1000:m].T
 Y_train = data_train[0]
 X_train = data_train[1:n]
@@ -35,8 +38,9 @@ X_train = X_train / 255.
 _,m_train = X_train.shape
 
 # np.random.rand(x, y) gives x arrays, y elements per array, each element a random decimal between 0 and 1
-# Ex. W1 and b1 correspond to layer 1, the hidden layer,
-# which has 10 nodes, each recieving input from each of the 784 nodes of the input layer
+# Ex. W1 and b1 correspond to layer 1, the hidden layer
+# The hidden layer has 10 nodes, each recieving input from each of the 784 nodes of the input layer
+# Each of the values of the matrices created in this method are subtracted by 0.5 to set them between -0.5 and 0.5
 def init_params():
     W1 = np.random.rand(10, 784) - 0.5
     b1 = np.random.rand(10, 1) - 0.5
@@ -45,19 +49,24 @@ def init_params():
 
     return W1, b1, W2, b2
 
+# For RelU, Y = 0 when X <= 0, and Y = X when X > 0
 def ReLU(Z):
     return np.maximum(Z, 0)
 
+# This function is used instead of ReLU for the output layer of the network
+# It sets each value as a percentage of confidence, all values adding up to 1
 # np.exp(Z) is e^Z
-# This function takes an array and converts each element into (e^element / the sum of e^each element)
+# This function takes each element of the array and converts it to (e^element / the sum of e^each element)
 def softmax(Z):
     return np.exp(Z) / sum(np.exp(Z))
 
-# X is an array of the 784 input nodes(?)
+# X is a 784 x 41,000 matrix (X_train) each of the 784 arrays representing the next pixle for each of the 41,000 training examples
 def forward_prop(W1, b1, W2, b2, X):
     Z1 = W1.dot(X) + b1
+    # 10x784 * 784x41,000 = 10x41,000
     A1 = ReLU(Z1)
     Z2 = W2.dot(A1) + b2
+    # 10x10 * 10x41,000 = 10x41,000
     A2 = softmax(Z2)
 
     return Z1, A1, Z2, A2
@@ -67,6 +76,7 @@ def forward_prop(W1, b1, W2, b2, X):
 def ReLU_deriv(Z):
     return Z > 0
 
+# This function gives the desired values of the 10 output nodes, each being 0 except the correct guess, which is 1
 # For each element in Y, this function converts that element into an array of all zeroes,
 # except the element corresponding to the ground-truth number, which is set to 1
 def one_hot(Y):
@@ -181,3 +191,15 @@ elif get_accuracy(dev_predictions, Y_dev) < 0.95:
     print("Test Set Accuracy: " + BLUE + str(get_accuracy(dev_predictions, Y_dev)) + RESET)
 else:
     print("Test Set Accuracy: " + PURPLE + str(get_accuracy(dev_predictions, Y_dev)) + RESET)
+
+np.set_printoptions(threshold=np.inf)
+
+with open("weights_and_biases.txt", "w") as f:
+    f.write("W1#")
+    f.write(str(W1))
+    f.write("#b1#")
+    f.write(str(b1))
+    f.write("#W2#")
+    f.write(str(W2))
+    f.write("#b2#")
+    f.write(str(b2))
