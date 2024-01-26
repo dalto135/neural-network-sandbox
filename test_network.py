@@ -8,11 +8,10 @@ data = np.array(data)
 m, n = data.shape
 np.random.shuffle(data)
 
-data_train = data[1000:m].T
-Y_train = data_train[0]
-X_train = data_train[1:n]
-X_train = X_train / 255.
-_,m_train = X_train.shape
+data_test = data[0:1000].T
+Y_test = data_test[0]
+X_test = data_test[1:n]
+X_test = X_test / 255.
 
 with open("weights_and_biases.txt", "r") as file:
     weights_and_biases = file.read()
@@ -59,13 +58,13 @@ def make_predictions(X, W1, b1, W2, b2):
     return predictions
 
 def test_prediction(index, W1, b1, W2, b2):
-    prediction = make_predictions(X_train[:, index, None], W1, b1, W2, b2)
-    label = Y_train[index]
+    prediction = make_predictions(X_test[:, index, None], W1, b1, W2, b2)
+    label = Y_test[index]
     print("Prediction:", prediction.item(0,0))
     print("Label:", label)
     
     if prediction != label:
-        current_image = X_train[:, index, None]
+        current_image = X_test[:, index, None]
         current_image = current_image.reshape((28, 28)) * 255
         plt.gray()
         plt.imshow(current_image, interpolation='nearest')
