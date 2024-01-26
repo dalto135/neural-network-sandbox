@@ -37,7 +37,8 @@ X_train = data_train[1:n]
 X_train = X_train / 255.
 _,m_train = X_train.shape
 
-# np.random.rand(x, y) gives x arrays, y elements per array, each element a random decimal between 0 and 1
+# np.random.rand(x, y) creates a matrix that looks like x arrays, y elements per array
+# Each element is a random decimal between 0 and 1
 # Ex. W1 and b1 correspond to layer 1, the hidden layer
 # The hidden layer has 10 nodes, each recieving input from each of the 784 nodes of the input layer
 # Each of the values of the matrices created in this method are subtracted by 0.5 to set them between -0.5 and 0.5
@@ -76,9 +77,10 @@ def forward_prop(W1, b1, W2, b2, X):
 def ReLU_deriv(Z):
     return Z > 0
 
-# This function gives the desired values of the 10 output nodes, each being 0 except the correct guess, which is 1
-# For each element in Y, this function converts that element into an array of all zeroes,
-# except the element corresponding to the ground-truth number, which is set to 1
+# Y is Y_train, an array of the 41,000 ground-truth numbers (labels) of the data used to train the network
+# For each element in Y, this function outputs a 10 element array
+# Each of these 10 elements is zero, except the element corresponding to the element from Y, which is set to 1
+# Ex. If the ground-truth element is 3, the outputed 10 element array would be [0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
 def one_hot(Y):
     one_hot_Y = np.zeros((Y.size, Y.max() + 1))
     one_hot_Y[np.arange(Y.size), Y] = 1
@@ -87,7 +89,7 @@ def one_hot(Y):
     return one_hot_Y
 
 # Calculates the loss values for each of the weights and biases(?)
-# Y is the ground-truth value
+# Y is the ground-truth values
 def backward_prop(Z1, A1, Z2, A2, W1, W2, X, Y):
     one_hot_Y = one_hot(Y)
 
@@ -141,7 +143,6 @@ def gradient_descent(X, Y, alpha, iterations):
     return W1, b1, W2, b2
 
 num_of_samples = 500
-# num_of_samples = data_train[0].size
 W1, b1, W2, b2 = gradient_descent(X_train, Y_train, 0.10, num_of_samples)
 
 def make_predictions(X, W1, b1, W2, b2):
@@ -149,23 +150,6 @@ def make_predictions(X, W1, b1, W2, b2):
     predictions = get_predictions(A2)
 
     return predictions
-
-def test_prediction(index, W1, b1, W2, b2):
-    current_image = X_train[:, index, None]
-    prediction = make_predictions(X_train[:, index, None], W1, b1, W2, b2)
-    label = Y_train[index]
-    print("Prediction:", prediction)
-    print("Label:", label)
-    
-    current_image = current_image.reshape((28, 28)) * 255
-    plt.gray()
-    plt.imshow(current_image, interpolation='nearest')
-    plt.show()
-
-# test_prediction(0, W1, b1, W2, b2)
-# test_prediction(1, W1, b1, W2, b2)
-# test_prediction(2, W1, b1, W2, b2)
-# test_prediction(3, W1, b1, W2, b2)
 
 dev_predictions = make_predictions(X_dev, W1, b1, W2, b2)
 
@@ -194,12 +178,12 @@ else:
 
 np.set_printoptions(threshold=np.inf)
 
-with open("weights_and_biases.txt", "w") as f:
-    f.write("W1#")
-    f.write(str(W1))
-    f.write("#b1#")
-    f.write(str(b1))
-    f.write("#W2#")
-    f.write(str(W2))
-    f.write("#b2#")
-    f.write(str(b2))
+with open("weights_and_biases.txt", "w") as file:
+    file.write("W1#")
+    file.write(str(W1))
+    file.write("#b1#")
+    file.write(str(b1))
+    file.write("#W2#")
+    file.write(str(W2))
+    file.write("#b2#")
+    file.write(str(b2))
