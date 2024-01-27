@@ -18,21 +18,15 @@ with open("weights_and_biases.txt", "r") as file:
 
 array = weights_and_biases.split('#')
 
-W1 = array[1]
-W1 = W1.replace("]\n [", "];\n [")
-W1 = np.matrix(W1, dtype=float)
+params_array = []
+for i in range(0, len(array), 2):
+    if i + 2 > len(array):
+        break
 
-b1 = array[3]
-b1 = b1.replace("]\n [", "];\n [")
-b1 = np.matrix(b1, dtype=float)
-
-W2 = array[5]
-W2 = W2.replace("]\n [", "];\n [")
-W2 = np.matrix(W2, dtype=float)
-
-b2 = array[7]
-b2 = b2.replace("]\n [", "];\n [")
-b2 = np.matrix(b2, dtype=float)
+    params = array[i + 2]
+    params = params.replace("]\n [", "];\n [")
+    params = np.matrix(params, dtype=float)
+    params_array.append(params)
 
 def ReLU(Z):
     return np.maximum(Z, 0)
@@ -40,29 +34,42 @@ def ReLU(Z):
 def softmax(Z):
     return np.exp(Z) / sum(np.exp(Z))
 
-def forward_prop(W1, b1, W2, b2, X):
-    Z1 = W1.dot(X) + b1
-    A1 = ReLU(Z1)
-    Z2 = W2.dot(A1) + b2
-    A2 = softmax(Z2)
+# X is a 784 x 41,000 matrix (X_train) each of the 784 arrays representing the next pixle for each of the 41,000 training examples
+def forward_prop(params_array, X):
+    computed_outputs = []
 
-    return Z1, A1, Z2, A2
+    for i in range(0, len(params_array), 2):
+        # Z is the dot products of the previous layer and weights, plus the biases 
+        if i == 0:
+            Z = params_array[i].dot(X) + params_array[i + 1]
+        else:
+            Z = params_array[i].dot(computed_outputs[-1]) + params_array[i + 1]
+        computed_outputs.append(Z)
+
+        # A is Z times the activation function
+        if i + 1 == len(params_array) - 1:
+            A = softmax(Z)
+        else:
+            A = ReLU(Z)
+        computed_outputs.append(A)
+
+    return computed_outputs
 
 def get_predictions(A2):
     return np.argmax(A2, 0)
 
-def make_predictions(X, W1, b1, W2, b2):
-    _, _, _, A2 = forward_prop(W1, b1, W2, b2, X)
-    predictions = get_predictions(A2)
+def make_predictions(X, params_array):
+    computed_outputs = forward_prop(params_array, X)
+    predictions = get_predictions(computed_outputs[-1])
 
     return predictions
 
-def test_prediction(index, W1, b1, W2, b2):
-    prediction = make_predictions(X_test[:, index, None], W1, b1, W2, b2)
+def test_prediction(index, params_array):
+    prediction = make_predictions(X_test[:, index, None], params_array)
     label = Y_test[index]
     print("Prediction:", prediction.item(0,0))
     print("Label:", label)
-    
+
     if prediction != label:
         current_image = X_test[:, index, None]
         current_image = current_image.reshape((28, 28)) * 255
@@ -70,7 +77,7 @@ def test_prediction(index, W1, b1, W2, b2):
         plt.imshow(current_image, interpolation='nearest')
         plt.show()
 
-test_prediction(0, W1, b1, W2, b2)
-test_prediction(1, W1, b1, W2, b2)
-test_prediction(2, W1, b1, W2, b2)
-test_prediction(3, W1, b1, W2, b2)
+test_prediction(0, params_array)
+test_prediction(1, params_array)
+test_prediction(2, params_array)
+test_prediction(3, params_array)

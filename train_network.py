@@ -71,24 +71,24 @@ def softmax(Z):
 
 # X is a 784 x 41,000 matrix (X_train) each of the 784 arrays representing the next pixle for each of the 41,000 training examples
 def forward_prop(params_array, X):
-    output_array = []
+    computed_outputs = []
 
     for i in range(0, len(params_array), 2):
         # Z is the dot products of the previous layer and weights, plus the biases 
         if i == 0:
             Z = params_array[i].dot(X) + params_array[i + 1]
         else:
-            Z = params_array[i].dot(output_array[-1]) + params_array[i + 1]
-        output_array.append(Z)
+            Z = params_array[i].dot(computed_outputs[-1]) + params_array[i + 1]
+        computed_outputs.append(Z)
 
         # A is Z times the activation function
-        if i + 1 == len(params_array) - 1:
+        if i == len(params_array) - 2:
             A = softmax(Z)
         else:
             A = ReLU(Z)
-        output_array.append(A)
+        computed_outputs.append(A)
 
-    return output_array[0], output_array[1], output_array[2], output_array[3]
+    return computed_outputs
 
 # For RelU, Y = 0 when X <= 0, and Y = X when X > 0
 # Taking the derivative of this graph gives 0 when X <= 0 and 1 when X > 0
@@ -108,26 +108,65 @@ def one_hot(Y):
 
 # Calculates the loss values for each of the weights and biases(?)
 # Y is the ground-truth values
-def backward_prop(Z1, A1, Z2, A2, W1, W2, X, Y):
+def backward_prop(computed_outputs, params_array, X, Y):
     one_hot_Y = one_hot(Y)
 
-    dZ2 = A2 - one_hot_Y
-    dW2 = 1 / m * dZ2.dot(A1.T)
-    db2 = 1 / m * np.sum(dZ2)
+    #############################
 
-    dZ1 = W2.T.dot(dZ2) * ReLU_deriv(Z1)
-    dW1 = 1 / m * dZ1.dot(X.T)
-    db1 = 1 / m * np.sum(dZ1)
+    # Z1 = computed_outputs[0]
+    # A1 = computed_outputs[1]
+    # Z2 = computed_outputs[2]
+    # A2 = computed_outputs[3]
 
-    return dW1, db1, dW2, db2
+    # dZ2 = A2 - one_hot_Y
+    # db2 = 1 / m * np.sum(dZ2)
+    # dW2 = 1 / m * dZ2.dot(A1.T)
 
-def update_params(W1, b1, W2, b2, dW1, db1, dW2, db2, alpha):
-    W1 = W1 - alpha * dW1
-    b1 = b1 - alpha * db1
-    W2 = W2 - alpha * dW2
-    b2 = b2 - alpha * db2
+    # dZ1 = W2.T.dot(dZ2) * ReLU_deriv(Z1)
+    # db1 = 1 / m * np.sum(dZ1)
+    # dW1 = 1 / m * dZ1.dot(X.T)
 
-    return W1, b1, W2, b2
+    # loss_values = [dW1, db1, dW2, db2]
+
+    #############################
+
+    computed_outputs.reverse()
+
+    loss_values = []
+    for i in range(0, len(computed_outputs), 2):
+        if i == 0:
+            dZ = computed_outputs[0] - one_hot_Y
+            db = 1 / m * np.sum(dZ)
+            dW = 1 / m * dZ.dot(computed_outputs[i + 2].T)
+        else:
+            # dZ = params_array[i].T.dot(dZ) * ReLU_deriv(computed_outputs[i + 1])
+            # db = 1 / m * np.sum(dZ)
+
+            if i == len(computed_outputs) - 2:
+                dZ = params_array[i].T.dot(dZ) * ReLU_deriv(computed_outputs[i + 1])
+                db = 1 / m * np.sum(dZ)
+                dW = 1 / m * dZ.dot(X.T)
+            else:
+                # dZ = params_array[i].T.dot(dZ) * ReLU_deriv(computed_outputs[i + 1])
+                db = 1 / m * np.sum(dZ)
+                dW = 1 / m * dZ.dot(computed_outputs[i + 2].T)
+
+        loss_values.append(db)
+        loss_values.append(dW)
+
+    computed_outputs.reverse()
+    loss_values.reverse()
+
+    #############################
+
+    return loss_values
+
+def update_params(params_array, loss_values, alpha):
+    new_params_array = []
+    for i in range(len(params_array)):
+        new_params_array.append(params_array[i] - alpha * loss_values[i])
+
+    return new_params_array
 
 def get_predictions(A2):
     return np.argmax(A2, 0)
@@ -138,28 +177,14 @@ def get_accuracy(predictions, Y):
 def gradient_descent(X, Y, alpha, iterations):
     params_array = init_params()
 
-    W1 = params_array[0]
-    b1 = params_array[1]
-    W2 = params_array[2]
-    b2 = params_array[3]
-
     for i in range(iterations):
-        weights = []
-        biases = []
-        for j in range(0, len(params_array), 2):
-            weights.append(params_array[j])
-            biases.append(params_array[j + 1])
+        computed_outputs = forward_prop(params_array, X)
+        loss_values = backward_prop(computed_outputs, params_array, X, Y)
+        params_array = update_params(params_array, loss_values, alpha)
 
-        Z1, A1, Z2, A2 = forward_prop(params_array, X)
-        dW1, db1, dW2, db2 = backward_prop(Z1, A1, Z2, A2, W1, W2, X, Y)
-        W1, b1, W2, b2 = update_params(W1, b1, W2, b2, dW1, db1, dW2, db2, alpha)
-
-        params_array = [W1, b1, W2, b2]
-
-        # if i % 10 == 0:
         print()
         print("Iteration:", i)
-        predictions = get_predictions(A2)
+        predictions = get_predictions(computed_outputs[-1])
         if get_accuracy(predictions, Y) < 0.5:
             print("Accuracy: " + RED + str(get_accuracy(predictions, Y)) + RESET)
         elif get_accuracy(predictions, Y) < 0.8:
@@ -171,20 +196,22 @@ def gradient_descent(X, Y, alpha, iterations):
         else:
             print("Accuracy: " + PURPLE + str(get_accuracy(predictions, Y)) + RESET)
 
-    return W1, b1, W2, b2
+    return params_array
 
-num_of_samples = 500
-W1, b1, W2, b2 = gradient_descent(X_train, Y_train, 0.10, num_of_samples)
+iterations = 500
+params_array = gradient_descent(X_train, Y_train, 0.10, iterations)
 
-def make_predictions(X, W1, b1, W2, b2):
-    params_array = [W1, b1, W2, b2]
+# params_array = init_params()
+# computed_outputs = forward_prop(params_array, X_train)
+# loss_values = backward_prop(computed_outputs, params_array[-2], X_train, Y_train)
 
-    _, _, _, A2 = forward_prop(params_array, X)
-    predictions = get_predictions(A2)
+def make_predictions(X, params_array):
+    computed_outputs = forward_prop(params_array, X)
+    predictions = get_predictions(computed_outputs[-1])
 
     return predictions
 
-test_predictions = make_predictions(X_test, W1, b1, W2, b2)
+test_predictions = make_predictions(X_test, params_array)
 
 score_array = []
 for i in range(test_predictions.size):
@@ -212,11 +239,10 @@ else:
 np.set_printoptions(threshold=np.inf)
 
 with open("weights_and_biases.txt", "w") as file:
-    file.write("W1#")
-    file.write(str(W1))
-    file.write("#b1#")
-    file.write(str(b1))
-    file.write("#W2#")
-    file.write(str(W2))
-    file.write("#b2#")
-    file.write(str(b2))
+    for i in range(len(params_array)):
+        if i % 2 == 0:
+            file.write("#W#")
+        else:
+            file.write("#b#")
+
+        file.write(str(params_array[i]))
