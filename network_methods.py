@@ -20,51 +20,6 @@ def ReLU(Z):
 def softmax(Z):
     return np.exp(Z) / sum(np.exp(Z))
 
-def get_predictions(A2):
-    return np.argmax(A2, 0)
-
-def update_params(params_array, loss_values, alpha):
-    new_params_array = []
-    for i in range(len(params_array)):
-        new_params_array.append(params_array[i] - alpha * loss_values[i])
-
-    return new_params_array
-
-def get_accuracy(predictions, Y):
-    return np.sum(predictions == Y) / Y.size
-
-# np.random.rand(x, y) creates a matrix that looks like x arrays, y elements per array
-# Each element is a random decimal between 0 and 1
-# Each of the values of the matrices created in this method are subtracted by 0.5 to set them between -0.5 and 0.5
-def init_params(node_layers):
-    params_array = []
-
-    for i in range(len(node_layers)):
-        if i != 0:
-            biases = np.random.rand(node_layers[i], 1) - 0.5
-            params_array.append(biases)
-        if i != len(node_layers) - 1:
-            weights = np.random.rand(node_layers[i + 1], node_layers[i]) - 0.5
-            params_array.append(weights)
-
-    return params_array
-
-# For RelU, Y = 0 when X <= 0, and Y = X when X > 0
-# Taking the derivative of this graph gives 0 when X <= 0 and 1 when X > 0
-def ReLU_deriv(Z):
-    return Z > 0
-
-# Y is Y_train, an array of the 41,000 ground-truth numbers (labels) of the data used to train the network
-# For each element in Y, this function outputs a 10 element array
-# Each of these 10 elements is zero, except the element corresponding to the element from Y, which is set to 1
-# Ex. If the ground-truth element is 3, the outputed 10 element array will be [0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
-def one_hot(Y):
-    one_hot_Y = np.zeros((Y.size, Y.max() + 1))
-    one_hot_Y[np.arange(Y.size), Y] = 1
-    one_hot_Y = one_hot_Y.T
-
-    return one_hot_Y
-
 # X is a 784 x 41,000 matrix (X_train) each of the 784 arrays representing the next pixle for each of the 41,000 training examples
 def forward_prop(params_array, X):
     computed_outputs = []
@@ -86,11 +41,10 @@ def forward_prop(params_array, X):
 
     return computed_outputs
 
-def make_predictions(X, params_array):
-    computed_outputs = forward_prop(params_array, X)
-    predictions = get_predictions(computed_outputs[-1])
-
-    return predictions
+# For RelU, Y = 0 when X <= 0, and Y = X when X > 0
+# Taking the derivative of this graph gives 0 when X <= 0 and 1 when X > 0
+def ReLU_deriv(Z):
+    return Z > 0
 
 # Calculates the loss values for each of the weights and biases(?)
 def backward_prop(computed_outputs, params_array, one_hot_Y, X, m):
@@ -114,6 +68,47 @@ def backward_prop(computed_outputs, params_array, one_hot_Y, X, m):
 
     return loss_values
 
+# Y is Y_train, an array of the 41,000 ground-truth numbers (labels) of the data used to train the network
+# For each element in Y, this function outputs a 10 element array
+# Each of these 10 elements is zero, except the element corresponding to the element from Y, which is set to 1
+# Ex. If the ground-truth element is 3, the outputed 10 element array will be [0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+def one_hot(Y):
+    one_hot_Y = np.zeros((Y.size, Y.max() + 1))
+    one_hot_Y[np.arange(Y.size), Y] = 1
+    one_hot_Y = one_hot_Y.T
+
+    return one_hot_Y
+
+def update_params(params_array, loss_values, alpha):
+    new_params_array = []
+    for i in range(len(params_array)):
+        new_params_array.append(params_array[i] - alpha * loss_values[i])
+
+    return new_params_array
+
+def get_predictions(A2):
+    return np.argmax(A2, 0)
+
+def get_accuracy(predictions, Y):
+    return np.sum(predictions == Y) / Y.size
+
+# np.random.rand(x, y) creates a matrix that looks like x arrays, y elements per array
+# Each element is a random decimal between 0 and 1
+# Each of the values of the matrices created in this method are subtracted by 0.5 to set them between -0.5 and 0.5
+def init_params(node_layers):
+    params_array = []
+
+    for i in range(len(node_layers)):
+        if i != 0:
+            biases = np.random.rand(node_layers[i], 1) - 0.5
+            params_array.append(biases)
+        if i != len(node_layers) - 1:
+            weights = np.random.rand(node_layers[i + 1], node_layers[i]) - 0.5
+            params_array.append(weights)
+
+    return params_array
+
+# Trains the network
 def gradient_descent(X, Y, m, alpha, iterations, node_layers):
     params_array = init_params(node_layers)
 
@@ -142,6 +137,12 @@ def gradient_descent(X, Y, m, alpha, iterations, node_layers):
     print("Training Complete!")
 
     return params_array
+
+def make_predictions(X, params_array):
+    computed_outputs = forward_prop(params_array, X)
+    predictions = get_predictions(computed_outputs[-1])
+
+    return predictions
 
 def test_network_on_test_data(params_array, X_test, Y_test):
     test_predictions = make_predictions(X_test, params_array)
