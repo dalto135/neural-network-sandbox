@@ -24,7 +24,7 @@ X = X / 255.
 params_array = network_methods.get_params_from_file()
 network_methods.test_network_on_test_data(params_array, X, Y)
 
-network_methods.test_prediction(0, params_array, X, Y)
-network_methods.test_prediction(1, params_array, X, Y)
-network_methods.test_prediction(2, params_array, X, Y)
-network_methods.test_prediction(3, params_array, X, Y)
+# network_methods.test_prediction(0, params_array, X, Y)
+# network_methods.test_prediction(1, params_array, X, Y)
+# network_methods.test_prediction(2, params_array, X, Y)
+# network_methods.test_prediction(3, params_array, X, Y)

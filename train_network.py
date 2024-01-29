@@ -41,14 +41,3 @@ alpha = 0.10
 params_array = network_methods.gradient_descent(X_train, Y_train, m, alpha, iterations, node_layers)
 network_methods.test_network_on_test_data(params_array, X_test, Y_test)
 network_methods.write_to_file(params_array)
-
-# params_array = network_methods.init_params()
-# computed_outputs = network_methods.forward_prop(params_array, X_train)
-# loss_values = network_methods.backward_prop(computed_outputs, params_array[-2], X_train, Y_train, m)
-
-# for i in loss_values:
-#     # print(len(loss_values[i]))
-#     # print(len(loss_values[i][0]))
-#     print()
-#     print(i.shape)
-#     print(i.size)

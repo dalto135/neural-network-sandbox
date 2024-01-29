@@ -57,7 +57,7 @@ def ReLU_deriv(Z):
 # Y is Y_train, an array of the 41,000 ground-truth numbers (labels) of the data used to train the network
 # For each element in Y, this function outputs a 10 element array
 # Each of these 10 elements is zero, except the element corresponding to the element from Y, which is set to 1
-# Ex. If the ground-truth element is 3, the outputed 10 element array would be [0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+# Ex. If the ground-truth element is 3, the outputed 10 element array will be [0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
 def one_hot(Y):
     one_hot_Y = np.zeros((Y.size, Y.max() + 1))
     one_hot_Y[np.arange(Y.size), Y] = 1
@@ -78,7 +78,7 @@ def forward_prop(params_array, X):
         computed_outputs.append(Z)
 
         # A is Z times the activation function
-        if i + 1 == len(params_array) - 1:
+        if i == len(params_array) - 2:
             A = softmax(Z)
         else:
             A = ReLU(Z)
@@ -93,68 +93,35 @@ def make_predictions(X, params_array):
     return predictions
 
 # Calculates the loss values for each of the weights and biases(?)
-# Y is the ground-truth values
-def backward_prop(computed_outputs, params_array, X, Y, m):
-    one_hot_Y = one_hot(Y)
-
-    #############################
-
-    # Z1 = computed_outputs[0]
-    # A1 = computed_outputs[1]
-    # Z2 = computed_outputs[2]
-    # A2 = computed_outputs[3]
-
-    # dZ2 = A2 - one_hot_Y
-    # db2 = 1 / m * np.sum(dZ2)
-    # dW2 = 1 / m * dZ2.dot(A1.T)
-
-    # print(params_array[-2].shape)
-    # print(dZ2.shape)
-    # dZ1 = params_array[-2].T.dot(dZ2) * ReLU_deriv(Z1)
-    # db1 = 1 / m * np.sum(dZ1)
-    # dW1 = 1 / m * dZ1.dot(X.T)
-
-    # loss_values = [dW1, db1, dW2, db2]
-
-    #############################
-
-    computed_outputs.reverse()
-
+def backward_prop(computed_outputs, params_array, one_hot_Y, X, m):
     loss_values = []
+
     for i in range(0, len(computed_outputs), 2):
         if i == 0:
-            dZ = computed_outputs[0] - one_hot_Y
-            dW = 1 / m * dZ.dot(computed_outputs[i + 2].T)
+            dZ = computed_outputs[-1] - one_hot_Y
         else:
-            # dZ = params_array[i].T.dot(dZ) * ReLU_deriv(computed_outputs[i + 1])
+            dZ = params_array[len(params_array) - i].T.dot(dZ) * ReLU_deriv(computed_outputs[len(computed_outputs) - i - 2])
 
-            if i == len(computed_outputs) - 2:
-                dZ = params_array[i].T.dot(dZ) * ReLU_deriv(computed_outputs[i + 1])
-                dW = 1 / m * dZ.dot(X.T)
-            else:
-                # print(params_array[i].T.shape)
-                # print(dZ.shape)
-                dZ = params_array[i].T.dot(dZ) * ReLU_deriv(computed_outputs[i + 1])
-                dW = 1 / m * dZ.dot(computed_outputs[i + 2].T)
+        if i == len(computed_outputs) - 2:
+            dW = 1 / m * dZ.dot(X.T)
+        else:
+            dW = 1 / m * dZ.dot(computed_outputs[len(computed_outputs) - i - 3].T)
 
         db = 1 / m * np.sum(dZ)
 
-        loss_values.append(db)
-        loss_values.append(dW)
-
-    computed_outputs.reverse()
-    loss_values.reverse()
-
-    #############################
+        loss_values.insert(0, db)
+        loss_values.insert(0, dW)
 
     return loss_values
 
 def gradient_descent(X, Y, m, alpha, iterations, node_layers):
     params_array = init_params(node_layers)
 
+    one_hot_Y = one_hot(Y)
+
     for i in range(iterations):
         computed_outputs = forward_prop(params_array, X)
-        loss_values = backward_prop(computed_outputs, params_array, X, Y, m)
+        loss_values = backward_prop(computed_outputs, params_array, one_hot_Y, X, m)
         params_array = update_params(params_array, loss_values, alpha)
 
         print()
