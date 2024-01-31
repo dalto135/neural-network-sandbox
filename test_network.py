@@ -10,7 +10,7 @@ data = pd.read_csv('train.csv')
 # The data is shuffled before splitting into test and training sets
 data = np.array(data)
 m, n = data.shape
-np.random.shuffle(data)
+# np.random.shuffle(data)
 
 # The transpose of data is taken to test the trained network
 # Y is the first row of data, or an array of all of the ground-truth values of the data
@@ -24,7 +24,8 @@ X = X / 255.
 params_array = network_methods.get_params_from_file()
 network_methods.test_network_on_test_data(params_array, X, Y)
 
-# network_methods.test_prediction(0, params_array, X, Y)
+# element = len(Y) - 1
+# network_methods.test_prediction(element, params_array, X, Y)
 # network_methods.test_prediction(1, params_array, X, Y)
 # network_methods.test_prediction(2, params_array, X, Y)
 # network_methods.test_prediction(3, params_array, X, Y)
