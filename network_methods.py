@@ -71,7 +71,7 @@ def ReLU_deriv(Z):
 def backward_prop(computed_outputs, params_array, one_hot_Y, X, m):
     loss_values = []
 
-    # This loop iterates backwards through each biases layer (layer of nodes) in the network.
+    # This loop iterates backwards through each biases layer (layer of nodes) of the network.
     for i in range(0, len(computed_outputs), 2):
         # dZ is the loss values that are calculated for the biases of the current layer, for each of the training examples.
         if i == 0:
