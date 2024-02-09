@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from matplotlib import pyplot as plt
+from random import random
 import network_methods
 
 data = pd.read_csv('train.csv')
@@ -18,14 +18,15 @@ m, n = data.shape
 # X values fall between 0 and 255, so it is divided by 255 to set each value between 0 and 1
 data = data.T
 Y = data[0]
-X = data[1:n]
+# X = data[1:n]
+X = data[1:1000]
 X = X / 255.
 
-params_array = network_methods.get_params_from_file()
-network_methods.test_network_on_test_data(params_array, X, Y)
+file_path = "weights_and_biases.txt"
+params_array = network_methods.get_params_from_file(file_path)
+incorrect_guesses = network_methods.test_network_on_test_data(params_array, X, Y)
 
-# element = len(Y) - 1
-# network_methods.test_prediction(element, params_array, X, Y)
-# network_methods.test_prediction(1, params_array, X, Y)
-# network_methods.test_prediction(2, params_array, X, Y)
-# network_methods.test_prediction(3, params_array, X, Y)
+index = int(random() * len(incorrect_guesses))
+index = incorrect_guesses[index]
+
+network_methods.test_prediction(index, params_array, X, Y)

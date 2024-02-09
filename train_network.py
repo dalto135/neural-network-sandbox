@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from matplotlib import pyplot as plt
 import network_methods
 
 data = pd.read_csv('train.csv')
@@ -11,6 +10,11 @@ data = pd.read_csv('train.csv')
 data = np.array(data)
 m, n = data.shape
 np.random.shuffle(data)
+
+full_data = data.T
+Y = full_data[0]
+X = full_data[1:n]
+X = X / 255.
 
 # data_train is the transpose of the remaining 41,000 training examples, which will be used to train the network
 # Y_train is the first row of data_train, or an array of each of the ground-truth values of the remaining 41,000 training examples
@@ -40,4 +44,5 @@ iterations = 500
 alpha = 0.10
 params_array = network_methods.gradient_descent(X_train, Y_train, m, alpha, iterations, node_layers)
 network_methods.test_network_on_test_data(params_array, X_test, Y_test)
+# network_methods.test_network_on_test_data(params_array, X, Y)
 network_methods.write_to_file(params_array)

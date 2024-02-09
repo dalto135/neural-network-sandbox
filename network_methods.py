@@ -191,8 +191,9 @@ def gradient_descent(X, Y, m, alpha, iterations, node_layers):
         predictions = get_predictions(computed_outputs[-1])
         accuracy_string = get_accuracy(predictions, Y)
 
-        print()
-        print("Iteration:", i)
+        test_prediction(0, params_array, X, Y)
+
+        print("Iteration: " + str(i + 1) + " / " + str(iterations))
         print("Training Set Accuracy: " + accuracy_string)
 
     print()
@@ -204,18 +205,20 @@ def make_predictions(X, params_array):
     computed_outputs = forward_prop(params_array, X)
     predictions = get_predictions(computed_outputs[-1])
 
-    return predictions
+    return predictions, computed_outputs[-1]
 
 def test_network_on_test_data(params_array, X_test, Y_test):
-    test_predictions = make_predictions(X_test, params_array)
+    test_predictions, _ = make_predictions(X_test, params_array)
     test_predictions = np.ravel(test_predictions)
 
     score_array = []
+    incorrect_guesses = []
     for i in range(len(test_predictions)):
         if test_predictions[i] == Y_test[i]:
             score_array.append(test_predictions[i])
         else:
             score_array.append(str(test_predictions[i]) + "," + str(Y_test[i]))
+            incorrect_guesses.append(i)
 
     print()
     print("Test Set:")
@@ -225,6 +228,8 @@ def test_network_on_test_data(params_array, X_test, Y_test):
 
     print()
     print("Test Set Accuracy: " + accuracy_string)
+
+    return incorrect_guesses
 
 def write_to_file(params_array):
     np.set_printoptions(threshold=np.inf)
@@ -238,8 +243,8 @@ def write_to_file(params_array):
 
             file.write(str(params_array[i]))
 
-def get_params_from_file():
-    with open("weights_and_biases.txt", "r") as file:
+def get_params_from_file(file_path):
+    with open(file_path, "r") as file:
         weights_and_biases = file.read()
 
     array = weights_and_biases.split('#')
@@ -258,15 +263,56 @@ def get_params_from_file():
     return params_array
 
 def test_prediction(index, params_array, X_test, Y_test):
-    prediction = make_predictions(X_test[:, index, None], params_array)
+    prediction, output = make_predictions(X_test[:, index, None], params_array)
     label = Y_test[index]
-    print("Prediction:", prediction.item(0,0))
+
+    # if prediction != label:
+    current_image = X_test[:, index, None]
+    current_image = current_image.reshape((28, 28)) * 255
+
+    for i in current_image:
+        print_line = ""
+        for j in i:
+            if j == 0:
+                print_line += " "
+            elif j < 85:
+                print_line += "."
+            elif j < 170:
+                print_line += "+"
+            else:
+                print_line += "#"
+
+        print(print_line)
+
+    print()
+
+    if prediction[0] == label:
+        print(GREEN)
+    else:
+        print(RED)
+
+    # print("Prediction:", prediction.item(0,0))
+    print("Prediction:", prediction[0])
     print("Label:", label)
+    print(RESET)
 
-    if prediction != label:
-        current_image = X_test[:, index, None]
-        current_image = current_image.reshape((28, 28)) * 255
+    print()
 
-        plt.gray()
-        plt.imshow(current_image, interpolation='nearest')
-        plt.show()
+    for i in range(len(output)):
+        # number = output[i].item(0,0)
+        number = output[i][0]
+        ten_number = int(number * 100)
+        ten_string = ""
+        for j in range(ten_number):
+            ten_string += "#"
+
+        if len(ten_string) > 0:
+            ten_string += " "
+
+        print(str(i) + ": " + ten_string + str(number))
+
+    # plt.gray()
+    # plt.imshow(current_image, interpolation='nearest')
+    # plt.show()
+
+    print()
